@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\LoginRequest;
-use App\Models\Tables\TblUser;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\Request;
+use App\Models\Tables\TblUser;
+use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Hash;
+use App\Http\Requests\Auth\LoginRequest;
 
 class LoginController extends Controller
 {
@@ -37,20 +38,46 @@ class LoginController extends Controller
         ], 200);
     }
 
-   public function user(Request $request)
+ public function user(Request $request)
 {
-    $user = $request->user(); // Logged-in user via Sanctum
+    try {
+        $user = $request->user(); // Logged-in user via Sanctum
 
-    if (!$user) {
-        return response()->json(['message' => 'Not authenticated'], 401);
+        if (!$user) {
+            return response()->json(['message' => 'Not authenticated'], 401);
+        }
+
+        // Join tbl_user with lib_employee
+        $employee = \DB::table('tbl_user as u')
+            ->leftJoin('lib_employee as e', 'u.employee_pk', '=', 'e.Employee_PK')
+            ->select(
+                'u.User_Id',
+                'u.Username',
+                'u.Email_Address',
+                'u.Activated',
+                'e.First_Name',
+                'e.Middle_Name',
+                'e.Last_Name',
+                'e.Sex',
+                'e.Position',
+                'e.Office',
+                'e.Division',
+                'e.Cluster'
+            )
+            ->where('u.User_Id', $user->User_Id) // 👈 correct PK for tbl_user
+            ->first();
+
+        if (!$employee) {
+            return response()->json(['message' => 'Employee record not found'], 404);
+        }
+
+        return response()->json($employee);
+    } catch (\Exception $e) {
+        \Log::error('User fetch failed: ' . $e->getMessage());
+        return response()->json(['error' => $e->getMessage()], 500);
     }
-
-    return response()->json([
-        'Username'      => $user->Username,           // matches your DB column
-        'Email_Address' => $user->Email_Address,     // matches your DB column
-        'avatar'        => $user->avatar ?? null,    // optional, or null if not available
-    ]);
 }
+
 
 
     public function logout(Request $request)

@@ -10,10 +10,18 @@ use App\Http\Controllers\LibraryController\OfficeController;
 use App\Http\Controllers\LibraryController\DivisionController;
 use App\Http\Controllers\LibraryController\StatusOfAppointmentController;
 use App\Http\Controllers\LibraryController\UserLevelController;
+use App\Http\Controllers\LibraryController\SupplierController;
+use App\Http\Controllers\LibraryController\WarehouseController;
+use App\Http\Controllers\LibraryController\SupplyController;
+use App\Http\Controllers\LibraryController\UnitController;
+use App\Http\Controllers\LibraryController\CategoryController;
+use App\Http\Controllers\LibraryController\BrandController;
+use App\Http\Controllers\LibraryController\ModelController;
+use App\Http\Controllers\Supply\DeliveryController;
 
 Route::post('/register', [RegisterController::class, 'register']);
 Route::post('/login', [LoginController::class, 'login']);
-Route::get('/positions', [PositionController::class, 'index']);
+Route::apiResource('positions', PositionController::class);
 Route::get('/regions', [RegionController::class, 'index']);
 Route::get('/clusters', [ClusterController::class, 'index']);
 Route::get('/offices/region/{regionId}', [OfficeController::class, 'getByRegion']);
@@ -21,9 +29,28 @@ Route::get('/divisions', [DivisionController::class, 'index']);
 Route::get('/divisions/office/{officeId}', [DivisionController::class, 'byOffice']);
 Route::get('/status-of-appointments', [StatusOfAppointmentController::class, 'index']);
 Route::get('/user-levels', [UserLevelController::class, 'index']);
-
+Route::get('/suppliers', [SupplierController::class, 'index']);
+Route::get('/warehouses', [WarehouseController::class, 'index']);
+Route::get('/supplies', [SupplyController::class, 'index']);
+Route::get('/units', [UnitController::class, 'index']);
+Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/brands', [BrandController::class, 'index']);
+Route::get('/models', [ModelController::class, 'index']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [LoginController::class, 'user']);
     Route::post('/logout', [LoginController::class, 'logout']);
+
+    // Delivery
+    Route::get('/delivery/next-code', [DeliveryController::class, 'getNextCode']);
+    Route::prefix('delivery')->group(function () {
+    Route::get('/', [DeliveryController::class, 'index']);           // GET /delivery
+    Route::post('/add', [DeliveryController::class, 'store']);       // POST /delivery/add
+    Route::delete('/{id}', [DeliveryController::class, 'destroy']); // DELETE /delivery/{id}
+    Route::patch('/edit/{id}', [DeliveryController::class, 'update']); // PATCH /delivery/edit/{id}
+    Route::get('/{id}', [DeliveryController::class, 'show']);       // GET /delivery/{id} for edit
 });
+});
+
+
+

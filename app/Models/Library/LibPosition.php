@@ -9,15 +9,15 @@ class LibPosition extends Model
 {
     use SoftDeletes;
 
-    protected $table = 'lib_position'; // Adjust if your table name is different
-
+    protected $table = 'lib_position';
     protected $primaryKey = 'Position_Id';
+    public $incrementing = true;
+    protected $keyType = 'int';
 
-    // SoftDeletes will use this column by default, so specify it
+    // Laravel expects 'deleted_at', but our column is 'delete_at'
     const DELETED_AT = 'delete_at';
 
     protected $fillable = [
-        'Position_Id',
         'Position',
         'Position_Desc',
         'deleted_by',
@@ -25,9 +25,9 @@ class LibPosition extends Model
         'updated_by',
     ];
 
-    protected $dates = [
-        'delete_at',
-        'created_at',
-        'updated_at',
+    protected $casts = [
+        'delete_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 }

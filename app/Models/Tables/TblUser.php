@@ -2,13 +2,14 @@
 
 namespace App\Models\Tables;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Models\Library\LibEmployee;
 
-class TblUser extends Model
+class TblUser extends Authenticatable
 {
-    use HasFactory, HasApiTokens;
+    use HasApiTokens, Notifiable;
 
     protected $table = 'tbl_user';
     protected $primaryKey = 'User_Id';
@@ -18,6 +19,7 @@ class TblUser extends Model
         'Email_Address',
         'Password',
         'Activated',
+        'Employee_PK',
         'Activated_By',
         'Activated_At',
         'created_by',
@@ -30,4 +32,10 @@ class TblUser extends Model
     ];
 
     public $timestamps = true;
+
+    // Relationship to LibEmployee
+    public function employee()
+    {
+        return $this->belongsTo(LibEmployee::class, 'employee_pk', 'Employee_PK');
+    }
 }

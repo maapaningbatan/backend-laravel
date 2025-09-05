@@ -47,4 +47,17 @@ class LibEmployee extends Authenticatable
         'password',
         'remember_token',
     ];
+public function user()
+{
+    return $this->hasOne(\App\Models\Tables\TblUser::class, 'employee_pk', 'Employee_PK');
+}
+// LibEmployee.php
+public function getFullNameAttribute()
+{
+    $middleInitial = $this->Middle_Name ? strtoupper(substr($this->Middle_Name, 0, 1)) . '.' : '';
+    return "{$this->First_Name} {$middleInitial} {$this->Last_Name}";
+}
+
+
+
 }
