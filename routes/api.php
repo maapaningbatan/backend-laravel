@@ -18,9 +18,11 @@ use App\Http\Controllers\LibraryController\CategoryController;
 use App\Http\Controllers\LibraryController\BrandController;
 use App\Http\Controllers\LibraryController\ModelController;
 use App\Http\Controllers\Supply\DeliveryController;
+use App\Http\Controllers\LibraryController\UserController;
 
 Route::post('/register', [RegisterController::class, 'register']);
 Route::post('/login', [LoginController::class, 'login']);
+Route::get('/users', [UserController::class, 'index']);
 Route::apiResource('positions', PositionController::class);
 Route::get('/regions', [RegionController::class, 'index']);
 Route::get('/clusters', [ClusterController::class, 'index']);
@@ -37,8 +39,11 @@ Route::get('/categories', [CategoryController::class, 'index']);
 Route::get('/brands', [BrandController::class, 'index']);
 Route::get('/models', [ModelController::class, 'index']);
 
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [LoginController::class, 'user']);
+    Route::get('/user-profile', [UserController::class, 'profile']);
+
     Route::post('/logout', [LoginController::class, 'logout']);
 
     // Delivery

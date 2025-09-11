@@ -13,15 +13,32 @@ class TblUser extends Authenticatable
 
     protected $table = 'tbl_user';
     protected $primaryKey = 'User_Id';
+    public $timestamps = true;
 
     protected $fillable = [
         'Username',
         'Email_Address',
         'Password',
         'Activated',
-        'Employee_PK',
         'Activated_By',
         'Activated_At',
+        'Employee_Id',
+        'Honorifics',
+        'First_Name',
+        'Middle_Name',
+        'Last_Name',
+        'Suffix',
+        'Title',
+        'Sex',
+        'Position',
+        'Region',
+        'Office',
+        'Division',
+        'Cluster',
+        'Contact_Number',
+        'Address',
+        'Upload_Contract',
+        'User_Level',
         'created_by',
         'updated_by',
         'deleted_by',
@@ -29,13 +46,20 @@ class TblUser extends Authenticatable
 
     protected $hidden = [
         'Password',
+        'remember_token',
     ];
 
-    public $timestamps = true;
-
-    // Relationship to LibEmployee
-    public function employee()
+    // ✅ Relationship to LibEmployee (a user can have many history snapshots)
+    public function employeeHistory()
     {
-        return $this->belongsTo(LibEmployee::class, 'employee_pk', 'Employee_PK');
+        return $this->hasMany(LibEmployee::class, 'User_Id', 'User_Id')
+                    ->orderBy('version_no', 'desc');
+    }
+
+    // ✅ Helper to get latest employee snapshot
+    public function latestEmployee()
+    {
+        return $this->hasOne(LibEmployee::class, 'User_Id', 'User_Id')
+                    ->latestOfMany('version_no');
     }
 }
