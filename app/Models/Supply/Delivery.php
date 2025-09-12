@@ -22,7 +22,7 @@ class Delivery extends Model
         'po_amount','po_date','dr_no','dr_date','ris_no','ris_date',
         'ors_no','ors_date','dv_no','dv_date','prepared_by', 'status', 'created_by', 'updated_by', 'deleted_by'
     ];
-    
+
     protected $dates = ['deleted_at']; // ✅ tell Laravel to treat it as Carbon
 
     // Items relation

@@ -10,7 +10,9 @@ class ItemDelivery extends Model
     use HasFactory;
 
     protected $table = 'tbl_item_delivery';
-    protected $primaryKey = 'item_delivery_id'; // correct primary key
+
+    protected $primaryKey = 'item_delivery_id'; // ✅ important
+
 
     protected $fillable = [
     'delivery_id','supply','item_type','stock_number','unit',

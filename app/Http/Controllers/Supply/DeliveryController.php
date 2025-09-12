@@ -85,13 +85,13 @@ class DeliveryController extends Controller
                 'dv_date' => isset($validated['dv_date']) ? Carbon::parse($validated['dv_date']) : null,
                 'code_number' => $validated['code_number'] ?? null,
                 'prepared_by' => Auth::user()->employee_pk,
-                'status' => 'Pending', // default new delivery is Pending
+                'status' => 'Pending',
             ]);
 
             foreach ($validated['items'] as $item) {
                 $delivery->items()->create([
                     'supply' => $item['supply'] ?? null,
-                    'item_type' => $item['item_type'] ?? 'Supplies (Consumable)',
+'item_type' => isset($item['item_type']) ? (int) $item['item_type'] : null,
                     'stock_number' => $item['stock_number'] ?? null,
                     'unit' => $item['unit'] ?? null,
                     'category' => $item['category'] ?? null,
@@ -203,7 +203,7 @@ foreach ($validated['items'] as $item) {
     if (!empty($item['item_delivery_id'])) {
         $delivery->items()->where('item_delivery_id', $item['item_delivery_id'])->update([
             'supply' => $item['supply'] ?? null,
-            'item_type' => $item['item_type'] ?? 'Supplies (Consumable)',
+            'item_type' => isset($item['item_type']) ? (int) $item['item_type'] : null, // ✅ integer ID
             'stock_number' => $item['stock_number'] ?? null,
             'unit' => $item['unit'] ?? null,
             'category' => $item['category'] ?? null,
@@ -219,7 +219,7 @@ foreach ($validated['items'] as $item) {
     } else {
         $delivery->items()->create([
             'supply' => $item['supply'] ?? null,
-            'item_type' => $item['item_type'] ?? 'Supplies (Consumable)',
+            'item_type' => isset($item['item_type']) ? (int) $item['item_type'] : null, // ✅ integer ID
             'stock_number' => $item['stock_number'] ?? null,
             'unit' => $item['unit'] ?? null,
             'category' => $item['category'] ?? null,
@@ -241,20 +241,87 @@ foreach ($validated['items'] as $item) {
         });
     }
 
-    // 📌 Delete delivery and cascade items
+    // 📌 Approve delivery
+public function approve($id)
+{
+    return DB::transaction(function () use ($id) {
+        $delivery = Delivery::with('items')->findOrFail($id);
+
+        if ($delivery->status === 'Approved') {
+            return response()->json(['message' => 'Delivery already approved.'], 400);
+        }
+
+        $itemTypes = DB::table('lib_itemtype')->pluck('itemtype_name', 'itemtype_id');
+
+        foreach ($delivery->items as $item) {
+            $itemTypeName = strtolower(trim($itemTypes[$item->item_type] ?? ''));
+
+            if ($itemTypeName === 'ppe') {
+                $table = 'tbl_property_card';
+                $pkColumn = 'property_card_id';
+            } elseif ($itemTypeName === 'semi-expandable') {
+                $table = 'tbl_semi_expandable_card';
+                $pkColumn = 'semi_expandable_card_id';
+            } elseif (in_array($itemTypeName, ['supplies (consumable)', 'semi-expandable supplies (non-consumable)'])) {
+                $table = 'tbl_stock_card';
+                $pkColumn = 'stock_card_id';
+            } else {
+                continue;
+            }
+
+            $lastBalance = DB::table($table)
+                ->where('supply_id', $item->supply)
+                ->orderByDesc('transaction_date')
+                ->orderByDesc($pkColumn)
+                ->value('balance');
+
+            $newBalance = ($lastBalance ?? 0) + $item->quantity;
+
+            // Insert with ItemDelivery_id
+            DB::table($table)->insert([
+                'delivery_id' => $delivery->delivery_id,
+                'ItemDelivery_id' => $item->item_delivery_id, // save the tbl_delivery_item PK here
+                'supply_id' => $item->supply,
+                'transaction_date' => $delivery->purchase_date ?? now(),
+                'entry_type' => 'Delivery',
+                'reference_no' => $delivery->purchase_order_number,
+                'receipt_qty' => $item->quantity,
+                'balance' => $newBalance,
+                'unit_value' => $item->unit_value,
+                'total' => $item->total_amount,
+                'remarks' => $item->remarks,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $delivery->update([
+            'status' => 'Approved',
+            'approved_at' => now(),
+        ]);
+
+        return response()->json([
+            'message' => 'Delivery approved and items saved successfully!',
+            'data' => $delivery->load('items')
+        ]);
+    });
+}
+
+
+
+    // 📌 Delete delivery
     public function destroy($id)
     {
         try {
             $delivery = Delivery::findOrFail($id);
 
-            // 🚫 prevent deleting Approved deliveries
             if ($delivery->status === 'Approved') {
                 return response()->json([
                     'message' => 'Approved deliveries cannot be deleted.'
                 ], 403);
             }
 
-            $delivery->delete(); // items cascade via model relationship
+            $delivery->delete();
 
             return response()->json(['message' => 'Delivery deleted successfully']);
         } catch (\Exception $e) {
