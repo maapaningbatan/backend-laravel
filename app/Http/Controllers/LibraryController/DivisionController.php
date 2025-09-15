@@ -23,4 +23,12 @@ class DivisionController extends Controller
             ->select('Division_Id', 'Division_Desc', 'Office_Id')
             ->get();
     }
+
+    public function show($id) {
+    $division = LibDivision::find($id);
+    if (!$division) {
+        return response()->json(['message' => 'Division not found'], 404);
+    }
+    return response()->json($division);
+}
 }

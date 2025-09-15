@@ -14,5 +14,9 @@ class LibBrand extends Model
 
     protected $fillable = [
         'Brand_Description',
+        'Createdby',
+        'DateCreated',
+        'Updatedby',
+        'Date_Updated',
     ];
 }

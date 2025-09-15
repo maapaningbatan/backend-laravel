@@ -14,4 +14,10 @@ class RegionController extends Controller
             ->select('Region_Id', 'Region')
             ->get();
     }
+
+    public function show($id)
+{
+    $region = LibRegion::findOrFail($id);
+    return response()->json($region);
+}
 }

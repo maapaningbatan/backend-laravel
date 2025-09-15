@@ -1,17 +1,18 @@
 <?php
 
 namespace App\Models\Property;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\Library\LibSupply;
 use App\Models\Supply\ItemDelivery;
 
-class SemiExCard extends Model
+class PropertyCard extends Model
 {
     use HasFactory;
 
-    protected $table = 'tbl_semi_expandable_card';
-    protected $primaryKey = 'semi_expandable_card_id';
+    protected $table = 'tbl_property_card';
+    protected $primaryKey = 'property_card_id';
 
     protected $fillable = [
         'supply_id',
@@ -30,7 +31,7 @@ class SemiExCard extends Model
         'created_at',
         'updated_at',
         'delivery_id',
-        'itemdelivery_id'
+        'ItemDelivery_id',
     ];
 
     public function supply()
