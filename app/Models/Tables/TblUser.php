@@ -42,6 +42,8 @@ class TblUser extends Authenticatable
         'created_by',
         'updated_by',
         'deleted_by',
+        'employee_pk',
+
     ];
 
     protected $hidden = [

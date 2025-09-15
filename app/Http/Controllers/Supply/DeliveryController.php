@@ -60,7 +60,7 @@ class DeliveryController extends Controller
             'items' => 'required|array',
         ]);
 
-        return DB::transaction(function () use ($validated) {
+        return DB::transaction(function () use ($validated, $request) {
             $delivery = Delivery::create([
                 'iar_number' => $validated['iar_number'] ?? null,
                 'supplier' => $validated['supplier'] ?? null,
@@ -84,7 +84,8 @@ class DeliveryController extends Controller
                 'dv_no' => $validated['dv_no'] ?? null,
                 'dv_date' => isset($validated['dv_date']) ? Carbon::parse($validated['dv_date']) : null,
                 'code_number' => $validated['code_number'] ?? null,
-                'prepared_by' => Auth::user()->employee_pk,
+                'prepared_by' => $request->user()->employee_pk ?? null, // ✅ Assign here
+
                 'status' => 'Pending',
             ]);
 

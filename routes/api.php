@@ -24,7 +24,7 @@ use App\Http\Controllers\Property\SemiExCardController;
 use App\Http\Controllers\LibraryController\UserController;
 
 Route::post('/register', [RegisterController::class, 'register']);
-Route::post('/login', [LoginController::class, 'login']);
+Route::post('/login', [LoginController::class, 'login'])->name('login');
 Route::get('/users', [UserController::class, 'index']);
 Route::apiResource('positions', PositionController::class);
 Route::get('/regions', [RegionController::class, 'index']);
