@@ -2,10 +2,15 @@
 
 namespace App\Http\Controllers\Supply;
 
-use App\Models\Supply\RIS; // ✅ Correct import
+use Log;
+use App\Models\Supply\RIS;
+use App\Models\Supply\RisItem;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use App\Models\Library\LibRegion;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class RISController extends Controller
 {
@@ -15,101 +20,92 @@ class RISController extends Controller
         return response()->json($ris);
     }
 
-public function store(Request $request)
-{
-    $user = auth('sanctum')->user(); // or auth()->user()
-
-    if (!$user) {
-        return response()->json(['error' => 'Not authenticated'], 401);
-    }
-
-    $validator = Validator::make($request->all(), [
-        'responsibility_center' => 'required|string|max:255',
-        'purpose' => 'nullable|string',
-        'requested_by' => 'required|string|max:255',
-        'received_by' => 'nullable|string|max:255',
-        'approved_by' => 'nullable|string|max:255',
-    ]);
-
-    if ($validator->fails()) {
-        return response()->json(['errors' => $validator->errors()], 422);
-    }
-
-    // Get region of logged-in user
-    $regionId = $user->Region ?? null;
-    if (!$regionId) {
-        return response()->json(['error' => 'User has no region assigned'], 422);
-    }
-
-    $regionCode = \App\Models\Library\LibRegion::where('Region_ID', $regionId)->value('Region_Code') ?? 'REG00';
-
-    $ris = RIS::create([
-        'responsibility_center' => $request->responsibility_center,
-        'purpose' => $request->purpose,
-        'requested_by' => $request->requested_by,
-        'received_by' => $request->received_by,
-        'approved_by' => $request->approved_by,
-        'status' => 'Pending',
-        'region' => $regionCode,
-        'ris_number' => null,
-    ]);
-
-    $risNumber = RIS::generateRISNumber($regionCode);
-    $ris->update(['ris_number' => $risNumber]);
-    dd($risNumber);
-
-    return response()->json($ris, 201);
-}
+// Generate RIS number: YYYYMMRegionCode0001
 
 
-
-    public function show($id)
+    public function store(Request $request)
     {
-        $ris = RIS::findOrFail($id);
-        return response()->json($ris);
-    }
-
-    public function update(Request $request, $id)
-    {
-        $ris = RIS::findOrFail($id);
-
-        $validator = Validator::make($request->all(), [
-            'ris_number' => 'required|string|max:255',
-            'responsibility_center' => 'required|string|max:255',
-            'region' => 'required|string|max:255',
-            'office' => 'required|string|max:255',
-            'fund_cluster' => 'nullable|string|max:255',
+        $request->validate([
+            'responsibility_center' => 'required|string',
+            'region' => 'required|string',
+            'office' => 'required|string',
+            'fund_cluster' => 'required|string',
             'ris_date' => 'required|date',
-            'purpose' => 'nullable|string',
-            'requested_by' => 'required|string|max:255',
-            'received_by' => 'nullable|string|max:255',
-            'approved_by' => 'nullable|string|max:255',
+            'purpose' => 'required|string',
+            'requested_by' => 'required|string',
+            'received_by' => 'required|string',
+            'approved_by' => 'required|string',
+            'items' => 'required|array|min:1',
+            'items.*.supply_id' => 'required|integer',
+            'items.*.unit_id' => 'required|integer',
+            'items.*.quantity_requested' => 'required|integer|min:1',
+            'items.*.description' => 'nullable|string',
+            'items.*.remarks' => 'nullable|string',
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+        try {
+            DB::beginTransaction();
+
+            // Generate RIS Number
+            $regionCode = strtoupper(substr($request->region, 0, 2)); // "CO" for Central Office
+            $yearMonth = now()->format('Y-m');
+
+            $latestRIS = RIS::where('region', $request->region)
+                ->whereYear('ris_date', now()->year)
+                ->whereMonth('ris_date', now()->month)
+                ->latest('ris_id')
+                ->first();
+
+            $nextNumber = $latestRIS
+                ? intval(substr($latestRIS->ris_number, -4)) + 1
+                : 1;
+
+            $risNumber = $yearMonth . '-' . $regionCode . '-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+
+            // Save RIS
+            $ris = RIS::create([
+                'ris_number' => $risNumber,
+                'responsibility_center' => $request->responsibility_center,
+                'region' => $request->region,
+                'office' => $request->office,
+                'fund_cluster' => $request->fund_cluster,
+                'ris_date' => $request->ris_date,
+                'purpose' => $request->purpose,
+                'requested_by' => $request->requested_by,
+                'received_by' => $request->received_by,
+                'approved_by' => $request->approved_by,
+                'status' => 'pending', // default
+            ]);
+
+            // Save RIS Items
+            foreach ($request->items as $item) {
+                RISItem::create([
+                    'ris_id' => $ris->ris_id,
+                    'supply_id' => $item['supply_id'],
+                    'description' => $item['description'] ?? null,
+                    'unit_id' => $item['unit_id'],
+                    'quantity_requested' => $item['quantity_requested'],
+                    'quantity_issued' => $item['quantity_issued'] ?? 0,
+                    'remarks' => $item['remarks'] ?? null,
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'RIS successfully created.',
+                'data' => $ris->load('items')
+            ], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create RIS.',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        $ris->update($request->all());
-        return response()->json($ris);
-    }
-
-    public function destroy($id)
-    {
-        $ris = RIS::findOrFail($id);
-        $ris->delete();
-        return response()->json(['message' => 'RIS deleted successfully']);
-    }
-
-    public function approve($id)
-    {
-        $ris = RIS::findOrFail($id);
-
-        if ($ris->status === 'Approved') {
-            return response()->json(['message' => 'Already approved'], 400);
-        }
-
-        $ris->update(['status' => 'Approved']);
-        return response()->json(['message' => 'RIS approved successfully']);
     }
 }
+

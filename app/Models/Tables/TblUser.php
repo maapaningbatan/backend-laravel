@@ -6,6 +6,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\Library\LibEmployee;
+use App\Models\Library\LibRegion;
 
 class TblUser extends Authenticatable
 {
@@ -64,4 +65,9 @@ class TblUser extends Authenticatable
         return $this->hasOne(LibEmployee::class, 'User_Id', 'User_Id')
                     ->latestOfMany('version_no');
     }
+
+    public function regionDetails()
+{
+    return $this->belongsTo(LibRegion::class, 'Region', 'Region_Id');
+}
 }
