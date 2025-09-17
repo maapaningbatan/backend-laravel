@@ -54,27 +54,21 @@ public function store(Request $request)
         DB::beginTransaction();
 
         // 2️⃣ Fetch region for RIS number
-        $region = DB::table('lib_region')->where('Region_Id', $request->region_id)->first();
-        if (!$region) {
-            throw new \Exception("Region not found (ID: {$request->region_id})");
-        }
+       $region = DB::table('lib_region')->where('Region_Id', $request->region_id)->first();
+$regionCode = strtoupper($region->Region); // correct 2-letter code
+$yearMonth = now()->format('Y-m');
 
-        $regionCode = strtoupper(substr($region->Region_Desc, 0, 2));
+// Get the last number used for this month + region
+$lastNumber = DB::table('tbl_ris')
+    ->where('region_id', $request->region_id)
+    ->where('ris_number', 'like', "$yearMonth-$regionCode-%")
+    ->max(DB::raw('CAST(SUBSTRING(ris_number, -4) AS UNSIGNED)'));
 
-        // 3️⃣ Generate RIS number
-        $yearMonth = now()->format('Y-m');
-        $latestRIS = RIS::where('region_id', $request->region_id)
-            ->whereYear('ris_date', now()->year)
-            ->whereMonth('ris_date', now()->month)
-            ->latest('ris_id')
-            ->first();
+// Next number
+$nextNumber = $lastNumber ? $lastNumber + 1 : 1;
 
-        $lastNumber = $latestRIS
-            ? (int) filter_var(substr($latestRIS->ris_number, -4), FILTER_SANITIZE_NUMBER_INT)
-            : 0;
-
-        $nextNumber = $lastNumber + 1;
-        $risNumber = $yearMonth . '-' . $regionCode . '-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+// Final RIS number
+$risNumber = $yearMonth . '-' . $regionCode . '-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
 
         // 4️⃣ Create RIS
         $ris = RIS::create([
