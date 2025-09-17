@@ -13,19 +13,19 @@ class Ris extends Model
     protected $fillable = [
         'ris_number',
         'responsibility_center',
-        'purpose',
-        'requested_by',
-        'received_by',
-        'approved_by',
-        'region',
-        'office',
+        'region_id',
+        'office_id',
         'fund_cluster',
         'ris_date',
-        'status'
+        'purpose',
+        'requested_by_id',
+        'received_by_id',
+        'approved_by_id',
+        'status',
     ];
 
     public function items()
     {
-        return $this->hasMany(RisItem::class, 'ris_id', 'ris_id');
+        return $this->hasMany(RisItem::class, 'ris_id', 'ris_id')->with('supply');
     }
 }

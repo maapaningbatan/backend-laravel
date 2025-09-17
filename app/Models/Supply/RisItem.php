@@ -2,6 +2,7 @@
 
 namespace App\Models\Supply;
 
+use App\Models\Library\LibSupply;
 use Illuminate\Database\Eloquent\Model;
 
 class RisItem extends Model
@@ -25,4 +26,8 @@ class RisItem extends Model
     {
         return $this->belongsTo(RIS::class, 'ris_id', 'ris_id');
     }
+
+    public function supply() {
+    return $this->belongsTo(LibSupply::class, 'supply_id', 'SuppliesID');
+}
 }
