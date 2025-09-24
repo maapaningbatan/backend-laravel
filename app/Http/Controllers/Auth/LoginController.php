@@ -16,15 +16,15 @@ class LoginController extends Controller
         $fields = $request->validated();
 
         // Find user by username or email
-        $user = TblUser::where('Username', $fields['login'])
-                       ->orWhere('Email_Address', $fields['login'])
+        $user = TblUser::where('username', $fields['login'])
+                       ->orWhere('email', $fields['login'])
                        ->first();
 
-        if (!$user || !Hash::check($fields['password'], $user->Password)) {
+        if (!$user || !Hash::check($fields['password'], $user->password)) {
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
-        if ($user->Activated == 0) {
+        if ($user->activated == 0) {
             return response()->json(['message' => 'Account is not activated yet.'], 403);
         }
 
@@ -33,52 +33,50 @@ class LoginController extends Controller
 
         return response()->json([
             'message' => 'Login successful.',
-            'user' => $user,
-            'token' => $token,
+            'user'    => $user,
+            'token'   => $token,
         ], 200);
     }
 
- public function user(Request $request)
-{
-    try {
-        $user = $request->user(); // Logged-in user via Sanctum
+    public function user(Request $request)
+    {
+        try {
+            $user = $request->user(); // Current logged-in user via Sanctum
 
-        if (!$user) {
-            return response()->json(['message' => 'Not authenticated'], 401);
+            if (!$user) {
+                return response()->json(['message' => 'Not authenticated'], 401);
+            }
+
+            // Join tbl_users with lib_employees (history table)
+            $employee = DB::table('tbl_users as u')
+                ->leftJoin('lib_employees as e', 'u.employee_id', '=', 'e.id')
+                ->select(
+                    'u.id as user_id',
+                    'u.username',
+                    'u.email',
+                    'u.activated',
+                    'e.first_name',
+                    'e.middle_name',
+                    'e.last_name',
+                    'e.sex',
+                    'e.position_id',
+                    'e.office_id',
+                    'e.division_id',
+                    'e.cluster_id'
+                )
+                ->where('u.id', $user->id)
+                ->first();
+
+            if (!$employee) {
+                return response()->json(['message' => 'Employee record not found'], 404);
+            }
+
+            return response()->json($employee);
+        } catch (\Exception $e) {
+            \Log::error('User fetch failed: ' . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
         }
-
-        // Join tbl_user with lib_employee
-        $employee = \DB::table('tbl_user as u')
-            ->leftJoin('lib_employee as e', 'u.employee_pk', '=', 'e.Employee_PK')
-            ->select(
-                'u.User_Id',
-                'u.Username',
-                'u.Email_Address',
-                'u.Activated',
-                'e.First_Name',
-                'e.Middle_Name',
-                'e.Last_Name',
-                'e.Sex',
-                'e.Position',
-                'e.Office',
-                'e.Division',
-                'e.Cluster'
-            )
-            ->where('u.User_Id', $user->User_Id) // 👈 correct PK for tbl_user
-            ->first();
-
-        if (!$employee) {
-            return response()->json(['message' => 'Employee record not found'], 404);
-        }
-
-        return response()->json($employee);
-    } catch (\Exception $e) {
-        \Log::error('User fetch failed: ' . $e->getMessage());
-        return response()->json(['error' => $e->getMessage()], 500);
     }
-}
-
-
 
     public function logout(Request $request)
     {

@@ -9,29 +9,31 @@ class LibOffice extends Model
 {
     use SoftDeletes;
 
-    protected $table = 'lib_office';
-    protected $primaryKey = 'Office_Id';
-    public $timestamps = false; // we have manual date fields
-
-    const DELETED_AT = 'date_deleted';
+    protected $table = 'lib_offices';
+    protected $primaryKey = 'id';
 
     protected $fillable = [
-        'Office',
-        'Office_Desc',
-        'OBS_Head',
-        'Region',
-        'Cluster',
-        'Bldg_Id',
+        'bldg_id',
+        'cluster_id',
+        'office_code',
+        'office_desc',
+        'obs_head',
+        'region_id',
         'created_by',
-        'date_created',
         'updated_by',
-        'date_updated',
         'deleted_by',
     ];
 
-    protected $dates = [
-        'date_created',
-        'date_updated',
-        'date_deleted',
-    ];
+    protected $dates = ['created_at', 'updated_at', 'deleted_at'];
+
+    // Relationships
+    public function region()
+    {
+        return $this->belongsTo(LibRegion::class, 'region_id', 'id');
+    }
+
+    public function cluster()
+    {
+        return $this->belongsTo(LibCluster::class, 'cluster_id', 'id');
+    }
 }

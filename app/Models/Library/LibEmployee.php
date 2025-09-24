@@ -3,59 +3,54 @@
 namespace App\Models\Library;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model; // ✅ should extend Model, not Authenticatable
+use Illuminate\Database\Eloquent\Model;
 use App\Models\Tables\TblUser;
 
 class LibEmployee extends Model
 {
     use HasFactory;
 
-    protected $table = 'lib_employee';
-    protected $primaryKey = 'Employee_PK';
+    // ✅ Table and PK
+    protected $table = 'lib_employees';
+    protected $primaryKey = 'id';   // auto-increment bigint PK
     public $timestamps = true;
 
-    protected $fillable = [
-        'User_Id',
-        'Honorifics',
-        'First_Name',
-        'Middle_Name',
-        'Last_Name',
-        'Suffix',
-        'Title',
-        'Sex',
-        'Contact_Number',
-        'Address',
-        'Employee_Id',
-        'Position',
-        'Region',
-        'Office',
-        'Division',
-        'Cluster',
-        'SOA',
-        'SOE',
-        'User_Level',
-        'Upload_Contract',
+    // ✅ Fillable columns (match table + RegisterController)
+protected $fillable = [
+        'user_id',
+        'employee_no',
+        'honorific',
+        'first_name',
+        'middle_name',
+        'last_name',
+        'suffix',
+        'title',
+        'sex',
+        'position_id',
+        'region_id',
+        'office_id',
+        'division_id',
+        'cluster_id',
+        'contact_number',
+        'address',
+        'upload_contract',
+        'user_level_id',
+        'version_no',
+        'effective_date',
         'created_by',
         'updated_by',
-        'deleted_by',
-        'delete_at',
-        'effective_date',
-        'expired_at',
-        'version_no',
     ];
 
-    protected $hidden = [];
-
-    // ✅ Relationship to TblUser (a history row belongs to a single user)
+    // ✅ Relationship to TblUser (belongsTo)
     public function user()
     {
-        return $this->belongsTo(TblUser::class, 'User_Id', 'User_Id');
+        return $this->belongsTo(TblUser::class, 'user_id', 'id');
     }
 
     // ✅ Accessor for full name
     public function getFullNameAttribute()
     {
-        $middleInitial = $this->Middle_Name ? strtoupper(substr($this->Middle_Name, 0, 1)) . '.' : '';
-        return trim("{$this->First_Name} {$middleInitial} {$this->Last_Name}");
+        $middleInitial = $this->middle_name ? strtoupper(substr($this->middle_name, 0, 1)) . '.' : '';
+        return trim("{$this->first_name} {$middleInitial} {$this->last_name}");
     }
 }

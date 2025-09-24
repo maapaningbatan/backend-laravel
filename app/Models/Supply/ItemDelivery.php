@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\Library\LibUnit;
 use App\Models\Library\LibBrand;
+use App\Models\Library\LibModel;
 
 class ItemDelivery extends Model
 {
@@ -35,5 +36,10 @@ public function unit()
 {
     return $this->belongsTo(LibUnit::class, 'unit', 'Unit_Id');
 }
+public function model()
+{
+    return $this->belongsTo(LibModel::class,'model','model_id');
+}
+
 
 }

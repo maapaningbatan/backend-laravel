@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Supply;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
 use App\Models\Supply\Delivery;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class DeliveryController extends Controller
 {
@@ -45,6 +45,7 @@ class DeliveryController extends Controller
             'receiving_office' => 'nullable|string',
             'invoice_no' => 'nullable|string',
             'invoice_total_amount' => 'nullable|numeric',
+            'invoice_date' => 'nullable|date',
             'po_amount' => 'nullable|numeric',
             'po_date' => 'nullable|date',
             'dr_no' => 'nullable|string',
@@ -73,6 +74,7 @@ class DeliveryController extends Controller
                 'purpose' => $validated['purpose'] ?? null,
                 'invoice_no' => $validated['invoice_no'] ?? null,
                 'invoice_total_amount' => $validated['invoice_total_amount'] ?? 0,
+                'invoice_date' => isset($validated['invoice_date']) ? Carbon::parse($validated['invoice_date']) : null,
                 'po_amount' => $validated['po_amount'] ?? 0,
                 'po_date' => isset($validated['po_date']) ? Carbon::parse($validated['po_date']) : null,
                 'dr_no' => $validated['dr_no'] ?? null,
@@ -92,7 +94,7 @@ class DeliveryController extends Controller
             foreach ($validated['items'] as $item) {
                 $delivery->items()->create([
                     'supply' => $item['supply'] ?? null,
-'item_type' => isset($item['item_type']) ? (int) $item['item_type'] : null,
+                    'item_type' => isset($item['item_type']) ? (int) $item['item_type'] : null,
                     'stock_number' => $item['stock_number'] ?? null,
                     'unit' => $item['unit'] ?? null,
                     'category' => $item['category'] ?? null,
@@ -108,7 +110,7 @@ class DeliveryController extends Controller
 
             return response()->json([
                 'message' => 'Delivery saved successfully!',
-                'data' => $delivery->load('items', 'preparedByEmployee', 'supplierInfo')
+                'data' => $delivery->load('items', 'preparedByEmployee', 'supplierInfo'),
             ], 201);
         });
     }
@@ -118,7 +120,7 @@ class DeliveryController extends Controller
     {
         $delivery = Delivery::with(['supplierInfo', 'preparedByEmployee', 'items'])->find($id);
 
-        if (!$delivery) {
+        if (! $delivery) {
             return response()->json(['message' => 'Delivery not found'], 404);
         }
 
@@ -139,6 +141,7 @@ class DeliveryController extends Controller
             'receiving_office' => 'nullable|string',
             'invoice_no' => 'nullable|string',
             'invoice_total_amount' => 'nullable|numeric',
+            'invoice_date' => 'nullable|date',
             'po_amount' => 'nullable|numeric',
             'po_date' => 'nullable|date',
             'dr_no' => 'nullable|string',
@@ -160,7 +163,7 @@ class DeliveryController extends Controller
             // 🚫 Approved → locked
             if ($delivery->status === 'Approved') {
                 return response()->json([
-                    'message' => 'This delivery has already been approved and cannot be edited.'
+                    'message' => 'This delivery has already been approved and cannot be edited.',
                 ], 403);
             }
 
@@ -177,6 +180,7 @@ class DeliveryController extends Controller
                 'purpose' => $validated['purpose'] ?? null,
                 'invoice_no' => $validated['invoice_no'] ?? null,
                 'invoice_total_amount' => $validated['invoice_total_amount'] ?? 0,
+                'invoice_date' => isset($validated['invoice_date']) ? Carbon::parse($validated['invoice_date']) : null,
                 'po_amount' => $validated['po_amount'] ?? 0,
                 'po_date' => isset($validated['po_date']) ? Carbon::parse($validated['po_date']) : null,
                 'dr_no' => $validated['dr_no'] ?? null,
@@ -192,48 +196,48 @@ class DeliveryController extends Controller
             ]);
 
             // 🔄 Items sync
-$existingItemIds = $delivery->items()->pluck('item_delivery_id')->toArray();
-$incomingItemIds = array_filter(array_column($validated['items'], 'item_delivery_id'));
+            $existingItemIds = $delivery->items()->pluck('item_delivery_id')->toArray();
+            $incomingItemIds = array_filter(array_column($validated['items'], 'item_delivery_id'));
 
-$itemsToDelete = array_diff($existingItemIds, $incomingItemIds);
-if (!empty($itemsToDelete)) {
-    $delivery->items()->whereIn('item_delivery_id', $itemsToDelete)->delete();
-}
+            $itemsToDelete = array_diff($existingItemIds, $incomingItemIds);
+            if (! empty($itemsToDelete)) {
+                $delivery->items()->whereIn('item_delivery_id', $itemsToDelete)->delete();
+            }
 
-foreach ($validated['items'] as $item) {
-    if (!empty($item['item_delivery_id'])) {
-        $delivery->items()->where('item_delivery_id', $item['item_delivery_id'])->update([
-            'supply' => $item['supply'] ?? null,
-            'item_type' => isset($item['item_type']) ? (int) $item['item_type'] : null, // ✅ integer ID
-            'stock_number' => $item['stock_number'] ?? null,
-            'unit' => $item['unit'] ?? null,
-            'category' => $item['category'] ?? null,
-            'quantity' => $item['quantity'] ?? 0,
-            'unit_value' => $item['unit_value'] ?? 0,
-            'total_amount' => $item['total_amount'] ?? 0,
-            'brand' => $item['brand'] ?? null,
-            'model' => $item['model'] ?? null,
-            'additional_description' => $item['additional_description'] ?? null,
-            'remarks' => $item['remarks'] ?? null,
-            'updated_at' => now(),
-        ]);
-    } else {
-        $delivery->items()->create([
-            'supply' => $item['supply'] ?? null,
-            'item_type' => isset($item['item_type']) ? (int) $item['item_type'] : null, // ✅ integer ID
-            'stock_number' => $item['stock_number'] ?? null,
-            'unit' => $item['unit'] ?? null,
-            'category' => $item['category'] ?? null,
-            'quantity' => $item['quantity'] ?? 0,
-            'unit_value' => $item['unit_value'] ?? 0,
-            'total_amount' => $item['total_amount'] ?? 0,
-            'brand' => $item['brand'] ?? null,
-            'model' => $item['model'] ?? null,
-            'additional_description' => $item['additional_description'] ?? null,
-            'remarks' => $item['remarks'] ?? null,
-        ]);
-    }
-}
+            foreach ($validated['items'] as $item) {
+                if (! empty($item['item_delivery_id'])) {
+                    $delivery->items()->where('item_delivery_id', $item['item_delivery_id'])->update([
+                        'supply' => $item['supply'] ?? null,
+                        'item_type' => isset($item['item_type']) ? (int) $item['item_type'] : null, // ✅ integer ID
+                        'stock_number' => $item['stock_number'] ?? null,
+                        'unit' => $item['unit'] ?? null,
+                        'category' => $item['category'] ?? null,
+                        'quantity' => $item['quantity'] ?? 0,
+                        'unit_value' => $item['unit_value'] ?? 0,
+                        'total_amount' => $item['total_amount'] ?? 0,
+                        'brand' => $item['brand'] ?? null,
+                        'model' => $item['model'] ?? null,
+                        'additional_description' => $item['additional_description'] ?? null,
+                        'remarks' => $item['remarks'] ?? null,
+                        'updated_at' => now(),
+                    ]);
+                } else {
+                    $delivery->items()->create([
+                        'supply' => $item['supply'] ?? null,
+                        'item_type' => isset($item['item_type']) ? (int) $item['item_type'] : null, // ✅ integer ID
+                        'stock_number' => $item['stock_number'] ?? null,
+                        'unit' => $item['unit'] ?? null,
+                        'category' => $item['category'] ?? null,
+                        'quantity' => $item['quantity'] ?? 0,
+                        'unit_value' => $item['unit_value'] ?? 0,
+                        'total_amount' => $item['total_amount'] ?? 0,
+                        'brand' => $item['brand'] ?? null,
+                        'model' => $item['model'] ?? null,
+                        'additional_description' => $item['additional_description'] ?? null,
+                        'remarks' => $item['remarks'] ?? null,
+                    ]);
+                }
+            }
 
             return response()->json([
                 'message' => 'Delivery updated successfully!',
@@ -243,72 +247,70 @@ foreach ($validated['items'] as $item) {
     }
 
     // 📌 Approve delivery
-public function approve($id)
-{
-    return DB::transaction(function () use ($id) {
-        $delivery = Delivery::with('items')->findOrFail($id);
+    public function approve($id)
+    {
+        return DB::transaction(function () use ($id) {
+            $delivery = Delivery::with('items')->findOrFail($id);
 
-        if ($delivery->status === 'Approved') {
-            return response()->json(['message' => 'Delivery already approved.'], 400);
-        }
-
-        $itemTypes = DB::table('lib_itemtype')->pluck('itemtype_name', 'itemtype_id');
-
-        foreach ($delivery->items as $item) {
-            $itemTypeName = strtolower(trim($itemTypes[$item->item_type] ?? ''));
-
-            if ($itemTypeName === 'ppe') {
-                $table = 'tbl_property_card';
-                $pkColumn = 'property_card_id';
-            } elseif ($itemTypeName === 'semi-expandable') {
-                $table = 'tbl_semi_expandable_card';
-                $pkColumn = 'semi_expandable_card_id';
-            } elseif (in_array($itemTypeName, ['supplies (consumable)', 'semi-expandable supplies (non-consumable)'])) {
-                $table = 'tbl_stock_card';
-                $pkColumn = 'stock_card_id';
-            } else {
-                continue;
+            if ($delivery->status === 'Approved') {
+                return response()->json(['message' => 'Delivery already approved.'], 400);
             }
 
-            $lastBalance = DB::table($table)
-                ->where('supply_id', $item->supply)
-                ->orderByDesc('transaction_date')
-                ->orderByDesc($pkColumn)
-                ->value('balance');
+            $itemTypes = DB::table('lib_itemtype')->pluck('itemtype_name', 'itemtype_id');
 
-            $newBalance = ($lastBalance ?? 0) + $item->quantity;
+            foreach ($delivery->items as $item) {
+                $itemTypeName = strtolower(trim($itemTypes[$item->item_type] ?? ''));
 
-            // Insert with ItemDelivery_id
-            DB::table($table)->insert([
-                'delivery_id' => $delivery->delivery_id,
-                'ItemDelivery_id' => $item->item_delivery_id, // save the tbl_delivery_item PK here
-                'supply_id' => $item->supply,
-                'transaction_date' => $delivery->purchase_date ?? now(),
-                'entry_type' => 'Delivery',
-                'reference_no' => $delivery->purchase_order_number,
-                'receipt_qty' => $item->quantity,
-                'balance' => $newBalance,
-                'unit_value' => $item->unit_value,
-                'total' => $item->total_amount,
-                'remarks' => $item->remarks,
-                'created_at' => now(),
-                'updated_at' => now(),
+                if ($itemTypeName === 'ppe') {
+                    $table = 'tbl_property_card';
+                    $pkColumn = 'property_card_id';
+                } elseif ($itemTypeName === 'semi-expandable') {
+                    $table = 'tbl_semi_expandable_card';
+                    $pkColumn = 'semi_expandable_card_id';
+                } elseif (in_array($itemTypeName, ['supplies (consumable)', 'semi-expandable supplies (non-consumable)'])) {
+                    $table = 'tbl_stock_card';
+                    $pkColumn = 'stock_card_id';
+                } else {
+                    continue;
+                }
+
+                $lastBalance = DB::table($table)
+                    ->where('supply_id', $item->supply)
+                    ->orderByDesc('transaction_date')
+                    ->orderByDesc($pkColumn)
+                    ->value('balance');
+
+                $newBalance = ($lastBalance ?? 0) + $item->quantity;
+
+                // Insert with ItemDelivery_id
+                DB::table($table)->insert([
+                    'delivery_id' => $delivery->delivery_id,
+                    'ItemDelivery_id' => $item->item_delivery_id, // save the tbl_delivery_item PK here
+                    'supply_id' => $item->supply,
+                    'transaction_date' => $delivery->purchase_date ?? now(),
+                    'entry_type' => 'Delivery',
+                    'reference_no' => $delivery->purchase_order_number,
+                    'receipt_qty' => $item->quantity,
+                    'balance' => $newBalance,
+                    'unit_value' => $item->unit_value,
+                    'total' => $item->total_amount,
+                    'remarks' => $item->remarks,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            $delivery->update([
+                'status' => 'Approved',
+                'approved_at' => now(),
             ]);
-        }
 
-        $delivery->update([
-            'status' => 'Approved',
-            'approved_at' => now(),
-        ]);
-
-        return response()->json([
-            'message' => 'Delivery approved and items saved successfully!',
-            'data' => $delivery->load('items')
-        ]);
-    });
-}
-
-
+            return response()->json([
+                'message' => 'Delivery approved and items saved successfully!',
+                'data' => $delivery->load('items'),
+            ]);
+        });
+    }
 
     // 📌 Delete delivery
     public function destroy($id)
@@ -318,7 +320,7 @@ public function approve($id)
 
             if ($delivery->status === 'Approved') {
                 return response()->json([
-                    'message' => 'Approved deliveries cannot be deleted.'
+                    'message' => 'Approved deliveries cannot be deleted.',
                 ], 403);
             }
 
@@ -328,7 +330,7 @@ public function approve($id)
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to delete delivery',
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     }

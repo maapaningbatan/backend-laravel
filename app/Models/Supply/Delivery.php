@@ -18,7 +18,7 @@ class Delivery extends Model
 
     protected $fillable = [
         'iar_number','purchase_order_number','purchase_date','pr_number','pr_date',
-        'supplier','warehouse','receiving_office','code_number','purpose','invoice_no','invoice_total_amount',
+        'supplier','warehouse','receiving_office','code_number','purpose','invoice_no','invoice_total_amount','invoice_date',
         'po_amount','po_date','dr_no','dr_date','ris_no','ris_date',
         'ors_no','ors_date','dv_no','dv_date','prepared_by', 'status', 'created_by', 'updated_by', 'deleted_by'
     ];

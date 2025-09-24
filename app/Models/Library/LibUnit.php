@@ -16,4 +16,8 @@ class LibUnit extends Model
         'Unit_Type',
         'Unit_Description'
     ];
+      public function itemDeliveries()
+    {
+        return $this->hasMany(\App\Models\Supply\ItemDelivery::class, 'unit', 'Unit_Id');
+    }
 }

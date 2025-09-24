@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\Library\LibSupply;
 use App\Models\Supply\ItemDelivery;
+use App\Models\Supply\Delivery;
 
 class PropertyCard extends Model
 {
@@ -34,13 +35,17 @@ class PropertyCard extends Model
         'ItemDelivery_id',
     ];
 
-    public function supply()
+     public function supply()
     {
         return $this->belongsTo(LibSupply::class, 'supply_id', 'SuppliesID');
     }
     public function itemdelivery()
 {
     return $this->belongsTo(ItemDelivery::class, 'ItemDelivery_id', 'item_delivery_id');
+}
+public function delivery()
+{
+    return $this->belongsTo(Delivery::class,'delivery_id','delivery_id');
 }
 
 

@@ -2,34 +2,43 @@
 
 namespace App\Models\Library;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LibDivision extends Model
 {
-    use SoftDeletes;
+    use HasFactory;
 
-    protected $table = 'lib_division';
-    protected $primaryKey = 'Division_Id';
-    public $timestamps = false;
-
-    const DELETED_AT = 'date_deleted';
+    protected $table = 'lib_divisions';
+    protected $primaryKey = 'id';
+    public $timestamps = true;
 
     protected $fillable = [
-        'Division',
-        'Division_Desc',
-        'Office_Id',
-        'Region',
+        'office_id',
+        'region_id',
+        'division_code',
+        'division_desc',
         'created_by',
-        'date_created',
         'updated_by',
-        'date_updated',
         'deleted_by',
     ];
 
     protected $dates = [
-        'date_created',
-        'date_updated',
-        'date_deleted',
+        'created_at',
+        'updated_at',
+        'deleted_at',
     ];
+
+    /**
+     * Relationships
+     */
+    public function office()
+    {
+        return $this->belongsTo(LibOffice::class, 'office_id');
+    }
+
+    public function region()
+    {
+        return $this->belongsTo(LibRegion::class, 'region_id');
+    }
 }
