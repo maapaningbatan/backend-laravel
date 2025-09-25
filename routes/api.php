@@ -34,6 +34,8 @@ Route::post('/register', [RegisterController::class, 'register']);
 Route::post('/login', [LoginController::class, 'login'])->name('login');
 // User
 Route::get('/users', [UserController::class, 'index']);
+Route::patch('/users/{id}/toggle', [UserController::class, 'toggleActivation']);
+
 Route::get('/employees', [UserController::class, 'getByOffice']);
 Route::get('/employees', [UserController::class, 'getByDivision']);
 // Position
