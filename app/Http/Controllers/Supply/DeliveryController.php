@@ -14,7 +14,7 @@ class DeliveryController extends Controller
     // 📌 List all deliveries
     public function index()
     {
-        $deliveries = Delivery::with(['supplierInfo', 'preparedByEmployee'])
+        $deliveries = Delivery::with(['supplierInfo'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -35,7 +35,7 @@ class DeliveryController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'iar_number' => 'nullable|string',
+            'iar_number' => 'required|string',
             'supplier' => 'nullable|string',
             'purchase_order_number' => 'nullable|string',
             'purchase_date' => 'nullable|date',
@@ -131,7 +131,7 @@ class DeliveryController extends Controller
     public function update(Request $request, int $id)
     {
         $validated = $request->validate([
-            'iar_number' => 'nullable|string',
+            'iar_number' => 'required|string',
             'supplier' => 'nullable|string',
             'purchase_order_number' => 'nullable|string',
             'purchase_date' => 'nullable|date',

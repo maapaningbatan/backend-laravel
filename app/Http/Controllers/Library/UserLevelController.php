@@ -8,11 +8,14 @@ use App\Models\Library\LibUserLevel;
 class UserLevelController extends Controller
 {
     // List all user levels
-public function index($userlevelId)
-{
-    $permissions = LibPermission::where('userlevel_id', $userlevelId)->get();
-    return response()->json($permissions->values());
-}
+    public function index()
+    {
+        $userLevels = LibUserLevel::whereNull('deleted_at')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        return response()->json($userLevels);
+    }
 
     // Show a single user level
     public function show($id)

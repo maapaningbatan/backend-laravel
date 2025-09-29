@@ -92,9 +92,8 @@ Route::get('/modules', [ModuleController::class, 'index']);
 // User Levels
 Route::get('/user-levels', [UserLevelController::class, 'index']);
 Route::get('/user-levels/{id}', [UserLevelController::class, 'show']);
-// User Level Permissions
-Route::get('/user-levels/{id}/permissions', [UserLevelPermissionController::class, 'index']);
-Route::put('/user-levels/{id}/permissions', [UserLevelPermissionController::class, 'update']);
+
+
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [LoginController::class, 'user']);
@@ -102,7 +101,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout']);
     Route::get('/stock-card/{supplyId}', [StockCardController::class, 'show']);
     Route::get('/itemtypes', [ItemTypeController::class, 'index']);
-
+ // User Level Permissions
+    Route::get('/user-levels/{id}/permissions', [UserLevelPermissionController::class, 'index']);
+    Route::put('/user-levels/{id}/permissions', [UserLevelPermissionController::class, 'update']);
+    Route::get('/user-levels/{id}', [UserLevelPermissionController::class, 'show']);
     // Delivery
     Route::get('/delivery/next-code', [DeliveryController::class, 'getNextCode']);
     Route::prefix('delivery')->group(function () {
@@ -114,6 +116,5 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/{id}/approve', [DeliveryController::class, 'approve']);
 
         Route::get('/stock-card/{supplyId}', [StockCardController::class, 'show']);
-
     });
 });
