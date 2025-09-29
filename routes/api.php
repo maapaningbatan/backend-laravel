@@ -9,6 +9,7 @@ use App\Http\Controllers\Library\ClusterController;
 use App\Http\Controllers\Library\DivisionController;
 use App\Http\Controllers\Library\FundController;
 use App\Http\Controllers\Library\ItemTypeController;
+use App\Http\Controllers\Library\ModuleController;
 use App\Http\Controllers\Library\ModelController;
 use App\Http\Controllers\Library\OfficeController;
 use App\Http\Controllers\Library\PositionController;
@@ -21,6 +22,7 @@ use App\Http\Controllers\Library\UserController;
 use App\Http\Controllers\Library\UserLevelController;
 use App\Http\Controllers\Library\WarehouseController;
 use App\Http\Controllers\Library\LibCenterController;
+use App\Http\Controllers\Library\UserLevelPermissionController;
 use App\Http\Controllers\Property\PropertyCardController;
 use App\Http\Controllers\Property\PropertyIssuanceController;
 use App\Http\Controllers\Property\SemiExCardController;
@@ -85,6 +87,14 @@ Route::get('/ris/{id}', [RISController::class, 'show']);
 Route::put('/ris/{id}', [RISController::class, 'update']);
 Route::delete('/ris/{id}', [RISController::class, 'destroy']);
 Route::post('/ris/{id}/approve', [RISController::class, 'approve']);
+// Module
+Route::get('/modules', [ModuleController::class, 'index']);
+// User Levels
+Route::get('/user-levels', [UserLevelController::class, 'index']);
+Route::get('/user-levels/{id}', [UserLevelController::class, 'show']);
+// User Level Permissions
+Route::get('/user-levels/{id}/permissions', [UserLevelPermissionController::class, 'index']);
+Route::put('/user-levels/{id}/permissions', [UserLevelPermissionController::class, 'update']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [LoginController::class, 'user']);
