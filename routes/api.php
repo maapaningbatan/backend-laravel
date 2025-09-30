@@ -89,6 +89,8 @@ Route::delete('/ris/{id}', [RISController::class, 'destroy']);
 Route::post('/ris/{id}/approve', [RISController::class, 'approve']);
 // Module
 Route::get('/modules', [ModuleController::class, 'index']);
+Route::post('/addModuleWithPermissions', [ModuleController::class, 'storeWithPermissions']);
+
 // User Levels
 Route::get('/user-levels', [UserLevelController::class, 'index']);
 Route::get('/user-levels/{id}', [UserLevelController::class, 'show']);
@@ -104,6 +106,7 @@ Route::middleware('auth:sanctum')->group(function () {
  // User Level Permissions
     Route::get('/user-levels/{id}/permissions', [UserLevelPermissionController::class, 'index']);
     Route::put('/user-levels/{id}/permissions', [UserLevelPermissionController::class, 'update']);
+    Route::post('/user-levels/{id}/permissions', [UserLevelPermissionController::class, 'store']);
     Route::get('/user-levels/{id}', [UserLevelPermissionController::class, 'show']);
     // Delivery
     Route::get('/delivery/next-code', [DeliveryController::class, 'getNextCode']);
