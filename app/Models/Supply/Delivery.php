@@ -34,9 +34,9 @@ class Delivery extends Model
     // Supplier relation
     public function supplierInfo()
     {
-        return $this->belongsTo(LibSupplier::class, 'supplier', 'Supplier_Id')
+        return $this->belongsTo(LibSupplier::class, 'supplier', 'id')
                     ->withDefault([
-                        'Supplier_Name' => 'N/A'
+                        'supplier_name' => 'N/A'
                     ]);
     }
 

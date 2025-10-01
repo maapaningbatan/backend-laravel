@@ -6,21 +6,27 @@ use Illuminate\Database\Eloquent\Model;
 
 class LibSupplier extends Model
 {
-
-    protected $table = 'lib_supplier';
-    protected $primaryKey = 'Supplier_Id';
-    public $incrementing = true;
-    protected $keyType = 'int';
+    protected $table = 'lib_suppliers';
+    protected $primaryKey = 'id';
+    public $timestamps = true;
 
     protected $fillable = [
-        'Supplier_Name',
-        'Supplier_Address',
-        'Contract_Person',
-        'Contract_No',
-        'Tin_No',
-        'Createdby',
-        'Updatedby',
+        'supplier_name',
+        'supplier_address',
+        'contact_person',
+        'contact_no',
+        'tin_no',
         'supplier_no',
-        'supplier_email'
+        'supplier_email',
+        'region_id',
+        'created_by',
+        'date_created',
+        'updated_by',
+
     ];
+
+    public function deliveries()
+    {
+        return $this->hasMany(Delivery::class, 'supplier', 'id');
+    }
 }
