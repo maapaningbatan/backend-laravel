@@ -1,0 +1,43 @@
+stages:
+#  - sonarqube_analysis
+  - deploy
+######################
+
+variables:
+  GIT_DEPTH: 0
+  GIT_STRATEGY: fetch
+
+# This job performs the SonarQube code analysis.
+#sonarqube_job:
+#  stage: sonarqube_analysis
+#  tags:
+#    - staging-sonarpdpbtass-stg01
+#  script:
+#    - echo "Successfully checked out the latest version of the repository."
+#    - $SONAR_BIN/sonar-scanner -Dsonar.projectKey=bssdd_pdpb-tass-api_887f564e-8aa0-4591-a2e5-ace4b952d6cd -Dsonar.sources=. -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.token=$SONAR_TOKEN -Dsonar.exclusions=**/vendor/**,**/public/**,**/bootstrap/**,**/storage/**,**/database/**,**/config/**,**/phpunit.xml,**/resources/css/**,**/resources/js/**,**/resources/views/scribe/**,**/resources/views/vendor/**,**/routes/**
+#  rules:
+#    - if: $CI_COMMIT_BRANCH == "staging-branch"
+
+######################
+
+update_sourcecodes_testing:
+  stage: deploy
+  tags:
+    - staging-premisv2developmentapi-u1
+  script:
+    - echo "Update Codes"
+    - pushd "$PROJECT_DIRECTORY"
+    - git fetch
+    - git stash
+    - git pull origin $CI_COMMIT_BRANCH
+    - git rev-parse HEAD
+    - source ~/.bashrc
+    - composer install
+    - rm -rf dist
+    - npm install
+    - npm run build
+
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "staging"'  # Outer 'if' condition
+      exists:
+        - .gitlab-ci.yml  # 'exists' nested under 'if'
